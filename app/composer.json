@@ -1,0 +1,83 @@
+{
+  "name": "drupaljedi/project",
+  "description": "Project template for Drupal 9 projects with composer",
+  "type": "project",
+  "license": "GPL-2.0+",
+  "authors": [
+    {
+      "name": "",
+      "role": ""
+    }
+  ],
+  "require": {
+    "php": ">=7.3.0",
+    "composer/installers": "^1.2",
+    "cweagans/composer-patches": "^1.6",
+    "drupal/admin_toolbar": "^2.4",
+    "drupal/config_ignore": "^2.3",
+    "drupal/core": "^9.1",
+    "drupal/core-composer-scaffold": "^9",
+    "drupal/devel": "^4.0",
+    "drupal/devel_php": "^1.0",
+    "drupal/facets": "^2.0",
+    "drupal/mailsystem": "^4.4",
+    "drupal/media_library_block": "^1.0",
+    "drupal/media_library_form_element": "^2.0",
+    "drupal/module_filter": "^3.1",
+    "drupal/queue_ui": "^3.1",
+    "drupal/schema": "^2.0@alpha",
+    "drupal/search_api": "^1.25",
+    "drupal/swiftmailer": "^2.2",
+    "drupal/ultimate_cron": "^2.0@alpha",
+    "drush/drush": "^10.3",
+    "hirak/prestissimo": "^0.3.7",
+    "webflo/drupal-finder": "^0|^1.0.0",
+    "wikimedia/composer-merge-plugin": "^1.4",
+    "zaporylie/composer-drupal-optimizations": "^1.1"
+  },
+  "conflict": {
+    "drupal/drupal": "*"
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true,
+  "config": {
+    "sort-packages": true,
+    "optimize-autoloader": true,
+    "discard-changes": true
+  },
+  "repositories": [
+    {
+      "type": "composer",
+      "url": "https://packages.drupal.org/8"
+    }
+  ],
+  "scripts": {
+    "drupal-scaffold": "DrupalComposer\\DrupalScaffold\\Plugin::scaffold",
+    "post-install-cmd": [
+      "bash -c 'composer drupal-scaffold'"
+    ],
+    "post-update-cmd": [
+      "bash -c 'composer drupal-scaffold'"
+    ]
+  },
+  "extra": {
+    "installer-types": ["bower-asset", "npm-asset"],
+    "installer-paths": {
+      "docroot/core": ["type:drupal-core"],
+      "docroot/libraries/{$name}": ["type:drupal-library", "type:bower-asset", "type:npm-asset"],
+      "docroot/modules/contrib/{$name}": ["type:drupal-module"],
+      "docroot/modules/custom/{$name}": ["type:drupal-custom-module"],
+      "docroot/profiles/contrib/{$name}": ["type:drupal-profile"],
+      "docroot/themes/contrib/{$name}": ["type:drupal-theme"],
+      "docroot/themes/custom/{$name}": ["type:drupal-custom-theme"]
+    },
+    "merge-plugin": {
+      "require": []
+    },
+    "drupal-scaffold": {
+      "locations": {
+        "web-root": "./docroot"
+      }
+    }
+  }
+}

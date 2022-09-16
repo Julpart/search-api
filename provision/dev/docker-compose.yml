@@ -1,0 +1,34 @@
+version: "2.4"
+
+services:
+  nginx:
+    image: registry.i20.biz/drupaljedi/${COMPOSE_PROJECT_NAME}/nginx:${CODE_VERSION}
+    env_file: .env
+    ports:
+      - 80:80
+    volumes_from:
+      - php-fpm
+    depends_on:
+      - php-fpm
+
+  php-fpm:
+    image: registry.i20.biz/drupaljedi/${COMPOSE_PROJECT_NAME}/php-fpm:${CODE_VERSION}
+    env_file: .env
+    volumes:
+      - ./docker-runtime/php-settings:/var/www/site-php/${COMPOSE_PROJECT_NAME}
+      - ../../app/docroot/sites/default/files:/var/www/html/docroot/sites/default/files 
+
+  cli:
+    image: registry.i20.biz/drupaljedi/${COMPOSE_PROJECT_NAME}/cli:${CODE_VERSION}
+    env_file: .env
+    volumes_from:
+      - nginx
+      - php-fpm
+
+  mariadb: 
+    image: mariadb:10.3
+    volumes:
+      - ./docker-runtime/mysql:/var/lib/mysql
+    env_file: .env
+  
+

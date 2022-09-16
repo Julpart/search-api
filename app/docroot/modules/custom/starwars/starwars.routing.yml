@@ -1,0 +1,15 @@
+starwars.custom:
+  path: '/starwars'
+  defaults:
+    _controller: '\Drupal\starwars\Controller\starwarsController::content'
+  requirements:
+    _access: 'TRUE'
+
+starwars.form:
+  path: '/form'
+  defaults:
+      _form: '\Drupal\starwars\Form\StarWarsForm'
+  requirements:
+    _access: 'TRUE'
+
+

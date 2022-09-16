@@ -1,0 +1,23 @@
+<?php
+
+/**
+ * @file
+ * Drupal site-specific configuration file.
+ */
+
+$databases = [];
+
+// For separate DB.
+$databases['default']['default'] = [
+  'database' => getenv('MYSQL_DATABASE'),
+  'username' => getenv('MYSQL_USER'),
+  'password' => getenv('MYSQL_PASSWORD'),
+  'prefix' => '',
+  'host' => getenv('MYSQL_HOST'),
+  'namespace' => 'Drupal\\Core\\Database\\Driver\\mysql',
+  'driver' => 'mysql',
+];
+
+$settings['file_temp_path'] = '/tmp';
+$settings['file_public_path'] = 'sites/default/files';
+$settings['file_private_path'] = 'sites/default/files/private';

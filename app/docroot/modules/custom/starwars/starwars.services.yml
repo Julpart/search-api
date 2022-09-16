@@ -1,0 +1,16 @@
+services:
+  starwars.sources:
+    class: Drupal\starwars\Services\APIService
+    arguments: ['@http_client']
+
+  starwars.delete:
+    class: Drupal\starwars\Services\DeleteService
+
+  starwars.mail_handler:
+    class: Drupal\starwars\Mail\MailHandler
+    arguments: ['@plugin.manager.mail', '@language_manager', '@language.default', '@string_translation']
+
+  starwars.user_login_mail:
+    class: Drupal\starwars\Mail\UserLoginMail
+    arguments: ['@starwars.mail_handler', '@request_stack', '@config.factory']
+

@@ -1,0 +1,44 @@
+<?php
+use Drupal\Core\Entity\EntityInterface;
+use Drupal\Core\Queue\QueueFactory;
+use Drupal\Core\Queue\QueueInterface;
+
+/**
+* Implements hook_entity_insert().
+*/
+function starwars_cron() {
+  $result = \Drupal::service('starwars.sources');
+  $queue_factory = \Drupal::service('queue');
+  $queue = $queue_factory->get('cron_node');
+  $apiUrl = $result->getUrl();
+  foreach ($apiUrl as $key => $item) {
+    $data = [
+      'type' => $key,
+      'url' => $item,
+    ];
+    $queue->createItem($data);
+  }
+}
+
+function starwars_mail(string $key, array &$message, array $params): void {
+  /** @var \Drupal\Core\Render\RendererInterface $renderer */
+  $renderer = \Drupal::service('renderer');
+
+  if (isset($params['headers'])) {
+    $message['headers'] = array_merge($message['headers'], $params['headers']);
+  }
+  if (!empty($params['from'])) {
+    $message['from'] = $params['from'];
+  }
+  $message['subject'] = $params['subject'];
+  $message['body'][] = $renderer->renderPlain($params['body']);
+}
+
+function starwars_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  if($form_id == "contact_message_starwars_form_form"){
+    $user = \Drupal\user\Entity\User::load(\Drupal::currentUser()->id());
+    $form['field_name']['widget']['0']['#default_value'] = $user->field_name->value;
+    $form['field_surname']['widget']['0']['#default_value'] = $user->field_surname->value;
+  }
+}
+

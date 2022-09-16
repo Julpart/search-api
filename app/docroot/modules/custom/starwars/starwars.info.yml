@@ -1,0 +1,5 @@
+name: StarWars
+
+type: module
+core_version_requirement: ^9
+

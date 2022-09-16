@@ -1,0 +1,74 @@
+version: "2.4"
+
+services:
+  nginx:
+    build:
+      context: ../../
+      target: nginx-base 
+    environment:
+      VIRTUAL_HOST: ${NGINX_SERVER_NAME}
+      VIRTUAL_PORT: 8080
+      HTTPS_METHOD: noredirect
+    networks:
+      - local-net
+      - default
+    env_file: .env
+    volumes_from:
+      - php-fpm
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}_nginx.rule=Host(`${NGINX_SERVER_NAME}`)"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}_nginx.loadbalancer.server.port=8080"
+      - "traefik.docker.network=local-net"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}_nginx.tls=true"
+    depends_on:
+      - php-fpm
+
+  php-fpm:
+    build:
+      context: ../../
+      target: php-fpm-local
+    env_file: .env
+    volumes:
+      - ./docker-runtime/php-settings:/var/www/site-php/${COMPOSE_PROJECT_NAME}
+      - ../../app:/var/www/html
+  
+  cli:
+    build:
+      context: ../../
+      target: cli-local 
+    env_file: .env
+    environment:
+        SSH_AUTH_SOCK: /ssh-agent
+        COMPOSER_MEMORY_LIMIT: -1
+    volumes_from:
+      - nginx
+      - php-fpm
+    volumes:
+      - $SSH_AUTH_SOCK:/ssh-agent
+
+  mariadb: 
+    image: mariadb:10.3
+    volumes:
+      - ./docker-runtime/mysql:/var/lib/mysql
+    env_file: .env
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    environment:
+      VIRTUAL_HOST: mailhog.${NGINX_SERVER_NAME}
+      VIRTUAL_PORT: 8025
+    networks:
+      - local-net
+      - default
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}_mailhog.rule=Host(`mailhog.${NGINX_SERVER_NAME}`)"
+      - "traefik.http.services.${COMPOSE_PROJECT_NAME}_mailhog.loadbalancer.server.port=8025"
+      - "traefik.docker.network=local-net"
+      - "traefik.http.routers.${COMPOSE_PROJECT_NAME}_mailhog.tls=true"
+
+  
+networks:
+  local-net:
+    external: true

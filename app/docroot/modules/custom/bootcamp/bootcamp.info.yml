@@ -1,0 +1,9 @@
+name: Bootcamp Module
+package: Custom
+
+type: module
+core_version_requirement: ^9
+
+dependencies:
+- media_library
+- media_library_form_element

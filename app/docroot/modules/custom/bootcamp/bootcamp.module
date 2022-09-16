@@ -1,0 +1,12 @@
+<?php
+
+/**
+ * Implements hook_theme().
+ */
+function bootcamp_theme($existing, $type, $theme, $path) {
+  return [
+    'my_template' => [
+      'variables' => ['image' => NULL,'background_image' => NULL,'text' => NULL,'text_title' => NULL,'last' => NULL],
+    ],
+  ];
+}
