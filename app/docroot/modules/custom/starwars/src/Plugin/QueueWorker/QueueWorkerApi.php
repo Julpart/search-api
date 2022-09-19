@@ -30,9 +30,12 @@ class QueueWorkerApi extends QueueWorkerBase {
     $queuePage->createItem($dataItem);
     }
     foreach ($result->results as $item){
-      $item->type = $type;
-      $queue = $queue_factory->get('cron_node_publisher');
-      $queue->createItem($item);
+      $edit = mktime($item->edited);
+      if($edit <= $data['lastUpdate']) {
+        $item->type = $type;
+        $queue = $queue_factory->get('cron_node_publisher');
+        $queue->createItem($item);
+      }
     }
 
 

@@ -1,6 +1,7 @@
 <?php
 namespace Drupal\starwars\Services;
 use GuzzleHttp\ClientInterface;
+use GuzzleHttp\Exception\RequestException;
 
 class APIService{
   protected $httpClient;
@@ -21,7 +22,7 @@ class APIService{
   public function __construct(ClientInterface $http_client) {
     $this->httpClient = $http_client;
   }
-//проверка на дату изменения  states
+
 
   public  function getUrl(){
     return $this->api;
@@ -32,41 +33,33 @@ class APIService{
    */
   public function getApiByUrl($url)
   {
-    $request = $this->httpClient->request('GET', $url);
-    $requestContent = $request->getBody()->getContents();
-    $requestArr = json_decode($requestContent);
-    return $requestArr;
-  }
-  public function getAll()//сервис делает запросы очереди вызывают сервис
-  {
-    $result =[];
-    foreach ($this->api as $key => $item){
-      try {
-        $request = $this->httpClient->request('GET', $item);//проверку статуса на 200
-        $requestContent = $request->getBody()->getContents();
-      }catch (ClientException $e){
-        watchdog_exception('http_module', $e->getMessage());//drupal logger
-      }
+    try {
+      $request = $this->httpClient->request('GET', $url);
+      $requestContent = $request->getBody()->getContents();
       $requestArr = json_decode($requestContent);
-
-      $next = $requestArr->next;
-
-      $arr = $requestArr->results;
-      while (isset($next)) {
-        try {
-        $request = $this->httpClient->request('GET', $next);
-        $requestContent = $request->getBody()->getContents();
-        }catch (ClientException $e){
-          watchdog_exception('http_module', $e->getMessage());
-        }
-        $requestArr = json_decode($requestContent);
-        $next = $requestArr->next;
-        $arr = array_merge($requestArr->results,$arr);
-      }
-      $result += [$key => $arr];
+      return $requestArr;
     }
-    return $result;
+    catch (RequestException $e){
+      \Drupal::logger('starwars')->error($e->getMessage());
+    }
   }
+  public function getType($url){
+    $parsed_url = parse_url($url);
+    $path = [
+      'people',
+      'planets',
+      'films',
+      'vehicles',
+      'species',
+      'starships',
+    ];
+    foreach ($path as $item){
+      if(strripos($parsed_url['path'],$item)){
+        return $item;
+      }
+    }
+  }
+
 
 
 
