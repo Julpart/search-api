@@ -8,7 +8,6 @@ class starwarsController extends ControllerBase {
   public function content(){
 
     $result = \Drupal::service('starwars.delete');
-    $result->do();
     $build = [
      '#markup' => $this->t('1'),
     ];

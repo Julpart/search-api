@@ -20,7 +20,7 @@ function starwars_cron() {
     ];
     $queue->createItem($data);
   }
-  \Drupal::state()->set('edit',$_SERVER['REQUEST_TIME']);//request time
+  \Drupal::state()->set('edit',$_SERVER['REQUEST_TIME']);
 }
 
 

@@ -4,6 +4,11 @@ namespace Drupal\starwars\Services;
 use \Drupal\node\Entity\Node;
 
 class DeleteService{
+
+
+
+
+  /*
   public function do(){
     $query = \Drupal::entityQuery('node');
     $nids = $query->execute();
@@ -12,6 +17,6 @@ class DeleteService{
       $node = $node_storage->load($nid);
       $node->delete();
     }
-
-}
+  }
+  */
 }

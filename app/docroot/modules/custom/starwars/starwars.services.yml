@@ -5,6 +5,7 @@ services:
 
   starwars.delete:
     class: Drupal\starwars\Services\DeleteService
+    arguments: ['@starwars.sources']
 
   starwars.mail_handler:
     class: Drupal\starwars\Mail\MailHandler
@@ -13,4 +14,10 @@ services:
   starwars.user_login_mail:
     class: Drupal\starwars\Mail\UserLoginMail
     arguments: ['@starwars.mail_handler', '@request_stack', '@config.factory']
+
+  starwars.commands:
+    class: Drupal\starwars\Commands\starwarsCommand
+    tags:
+      - { name: drush.command }
+    arguments: ['@starwars.sources', '@queue']
 
