@@ -12,6 +12,9 @@ function starwars_cron() {
   $queue = $queue_factory->get('cron_node');
   $apiUrl = $result->getUrl();
   $lastUpdateTime = \Drupal::state()->get('edit');
+  if(!isset($lastUpdateTime)){
+    $lastUpdateTime = 0;
+  }
   foreach ($apiUrl as $key => $item) {
     $data = [
       'type' => $key,
@@ -22,8 +25,6 @@ function starwars_cron() {
   }
   \Drupal::state()->set('edit',$_SERVER['REQUEST_TIME']);
 }
-
-
 
 function starwars_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
   if($form_id == "contact_message_starwars_form_form"){
@@ -36,3 +37,67 @@ function starwars_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_
   }
 }
 
+function batch_process_items($date,$console, &$context){
+  $context['results']['console'] = $console;
+  $limit = 260;
+  $context['finished'] = 0;
+  $serviceApi = \Drupal::service('starwars.sources');
+  $apiUrl = $serviceApi->getUrl();
+  $count = count($apiUrl);
+  if (empty($context['sandbox']['progress'])) {
+    $context['sandbox']['progress'] = 0;
+    $context['sandbox']['link'] = current($apiUrl);
+    $context['sandbox']['type'] = 0;
+  }
+  $counter = 0;
+  $result = $serviceApi->getApiByUrl($context['sandbox']['link']);
+  $keys = array_keys($apiUrl);
+  $type = $keys[$context['sandbox']['type']];
+  if(isset($result->next)){
+    $context['sandbox']['link'] = $result->next;
+  }else{
+    $context['sandbox']['type']++;
+    if($context['sandbox']['type'] == $count){
+      $context['finished'] = 1;
+    }else{
+      $typenext = $keys[$context['sandbox']['type']];
+      $context['sandbox']['link'] = $apiUrl[$typenext];
+    }
+  }
+  foreach ($result->results as $item){
+    if ($counter != $limit) {
+      $edit = strtotime($item->edited);
+      $context['sandbox']['progress']++;
+      $counter++;
+      if ($edit >= $date) {
+        $item->type = $type;
+        batch_process_item($item);
+      }
+      if($console){
+
+      } else {
+        $context['message'] = t('Now processing node :progress', [
+          ':progress' => $context['sandbox']['progress'],
+        ]);
+      }
+      $context['results']['processed'] = $context['sandbox']['progress'];
+    }
+  }
+}
+
+function batch_process_item($item){
+  $serviceApi = \Drupal::service('starwars.batch');
+  $serviceApi->createNode($item);
+}
+
+function batch_starwars_finished($success, $results, $operations) {
+  if ($results['console']) {
+   print('Number of nodes affected by batch:' . $results['processed']);
+  } else {
+    $message = t('Number of nodes affected by batch: @count', [
+      '@count' => $results['processed'],
+    ]);
+    \Drupal::messenger()
+      ->addStatus($message);
+  }
+}

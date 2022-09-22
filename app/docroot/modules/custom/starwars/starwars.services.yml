@@ -3,6 +3,10 @@ services:
     class: Drupal\starwars\Services\APIService
     arguments: ['@http_client']
 
+  starwars.batch:
+    class: Drupal\starwars\Services\BatchService
+    arguments: ['@starwars.sources','@entity_type.manager']
+
   starwars.delete:
     class: Drupal\starwars\Services\DeleteService
     arguments: ['@starwars.sources']

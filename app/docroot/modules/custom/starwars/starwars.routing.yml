@@ -12,4 +12,11 @@ starwars.form:
   requirements:
     _access: 'TRUE'
 
+starwars.batchform:
+  path: '/admin/batchform'
+  defaults:
+    _form: '\Drupal\starwars\Form\BatchForm'
+  requirements:
+    _access: 'TRUE'
+
 

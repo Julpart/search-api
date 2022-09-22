@@ -26,7 +26,8 @@ class starwarsCommand extends DrushCommands {
  */
   public function starwarsCommand($date=false){
     if(!$date) {
-      $this->importSwapi();
+   //   $this->importSwapi();
+      $this->importSwapiBatch();
       return 1;
     }
 
@@ -35,7 +36,8 @@ class starwarsCommand extends DrushCommands {
       $this->output()->writeln('data entry error');
       return 0;
     }
-    $this->importSwapi($date);
+   // $this->importSwapi($date);
+    $this->importSwapiBatch($date);
 
 
   }
@@ -51,11 +53,27 @@ class starwarsCommand extends DrushCommands {
         'type' => $key,
         'url' => $item,
         'lastUpdate' => $lastUpdateTime,
-        'drushMode' => true,
       ];
       $queue->createItem($data);
       $this->output()->writeln('Создана очередь типа ' . $key);
     }
     $this->output()->writeln('Все очереди созданы.');
+  }
+
+
+  protected function  importSwapiBatch($date=0){
+    $console = true;
+    $operations = [
+      ['batch_process_items', [$date,$console]],
+    ];
+    $batch = [
+      'title' => 'Batch process',
+      'operations' => $operations,
+      'finished' => 'batch_starwars_finished',
+    ];
+    batch_set($batch);
+    $this->output()->writeln('Запущен batch process');
+    drush_backend_batch_process();
+    $this->output()->writeln('Batch завершил работу');
   }
 }

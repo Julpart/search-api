@@ -30,6 +30,7 @@ class QueueWorkerApi extends QueueWorkerBase implements ContainerFactoryPluginIn
   public function processItem($data) {
     $url = $data['url'];
     $type = $data['type'];
+    $lastUpdate = $data['lastUpdate'];
     $service = $this->serviceApi;
     $result = $service->getApiByUrl($url);
     $queue_factory = $this->serviceQueue;
@@ -38,20 +39,16 @@ class QueueWorkerApi extends QueueWorkerBase implements ContainerFactoryPluginIn
       $dataItem = [
         'url' => $result->next,
         'type' => $type,
+        'lastUpdate' => $lastUpdate,
       ];
     $queuePage->createItem($dataItem);
     }
-    foreach ($result->results as $item){//исправить ошибку с условиями
+    foreach ($result->  results as $item){
       $edit = strtotime($item->edited);
-      if(isset($data['drushMode']) and $edit <= $data['lastUpdate']){
+      if($edit >= $lastUpdate){
           $item->type = $type;
           $queue = $queue_factory->get('cron_node_publisher');
           $queue->createItem($item);
-
-      }else if(!isset($data['drushMode']) and $edit >= $data['lastUpdate']) {
-        $item->type = $type;
-        $queue = $queue_factory->get('cron_node_publisher');
-        $queue->createItem($item);
       }
     }
 
