@@ -13,6 +13,14 @@ class APIService{
     'species' => 'https://swapi.dev/api/species',
     'starships' => 'https://swapi.dev/api/starships',
   ];
+  protected $types= [
+    'people',
+    'planets',
+    'films',
+    'vehicles',
+    'species',
+    'starships',
+  ];
   /**
    * Constructor for MymoduleServiceExample.
    *
@@ -42,6 +50,26 @@ class APIService{
     catch (RequestException $e){
       \Drupal::logger('starwars')->error($e->getMessage());
     }
+  }
+
+  public function getTypeByUrl($url)
+  {
+    $substring = 'https://swapi.dev/api/';
+    $type = str_replace($substring, "", $url);
+    return $type;
+  }
+  public function nextTypeLink($type)
+  {
+    $check = false;
+    foreach ($this->api as $key => $value){
+      if($check){
+        return ['link' => $value, 'type' =>$key];
+      }
+      if($key == $type){
+        $check = true;
+      }
+    }
+    return false;
   }
   public function getType($url){
     $parsed_url = parse_url($url);

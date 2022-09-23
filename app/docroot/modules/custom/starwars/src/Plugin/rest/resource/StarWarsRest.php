@@ -7,6 +7,7 @@ use Drupal\rest\ResourceResponse;
 use Drupal\user\UserInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use \Drupal\node\Entity\Node;
 
 /**
  * @RestResource(
@@ -26,6 +27,7 @@ class StarWarsRest extends ResourceBase
    * @var \Drupal\Core\Session\AccountProxyInterface
    */
   protected $currentUser;
+  protected $entityManager;
 
   /**
    * {@inheritdoc}
@@ -48,26 +50,47 @@ class StarWarsRest extends ResourceBase
    */
   public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition)
   {
-    return new static(
-      $configuration,
-      $plugin_id,
-      $plugin_definition,
-      $container->getParameter('serializer.formats'),
-      $container->get('logger.factory')->get('dummy'),
-      $container->get('current_user')
-    );
+    $instance = new static($configuration, $plugin_id, $plugin_definition,$container->getParameter('serializer.formats'),
+      $container->get('logger.factory')->get('dummy'), $container->get('current_user'));
+    $instance->entityManager = $container->get('entity_type.manager');
+    return $instance;
   }
-
+  public function permissions() {
+    return [];
+  }
+  protected function loadNode($arr){
+    $result = [];
+    foreach ($arr as $item){
+      $node = Node::load(current($item));
+      $result[] = [$item, $node->get('title')->getValue()];
+    }
+    return $result;
+  }
   public function get()
   {
     $query = \Drupal::request()->query;
     $response = [];
     if ($query->has('id')) {
       $queryNode = $this->entityManager->getStorage('node');
-      $node = $query->loadByProperties(['type' => 'people', 'field_swapi_id' => $query->get('id')]);
-      if (!empty($nod)) {
+      $swapi_id = $query->get('id');
+      $node = current($queryNode->loadByProperties(['type' => 'people', 'field_swapi_id' => (int)$swapi_id]));
+      if (!empty($node)) {
         $response['node'] = [
-          'name' => $node->field_name,
+          'name' => $node->get('field_name')->getValue(),
+          'height' => $node->get('field_height')->getValue(),
+          'mass' => $node->get('field_mass')->getValue(),
+          'hair_color' => $node->get('field_hair_color')->getValue(),
+          'skin_color' => $node->get('field_skin_color')->getValue(),
+          'eye_color' => $node->get('field_eye_color')->getValue(),
+          'birth_year' => $node->get('field_birth_year')->getValue(),
+          'gender' => $node->get('field_gender')->getValue(),
+          'homeworld' => $this->loadNode($node->get('field_homeworld')->getValue()),
+          'films' => $this->loadNode($node->get('field_films')->getValue()),
+          'species' => $this->loadNode($node->get('field_species')->getValue()),
+          'vehicles' => $this->loadNode($node->get('field_vehicles')->getValue()),
+          'starships' => $this->loadNode($node->get('field_starships')->getValue()),
+          'created' => $node->get('field_created')->getValue(),
+          'edited' => $node->get('field_edited')->getValue(),
         ];
         return new ResourceResponse($response);
       } else {

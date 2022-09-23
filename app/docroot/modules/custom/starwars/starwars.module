@@ -36,14 +36,77 @@ function starwars_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_
     $form['actions']['reset']['#access'] = TRUE;
   }
 }
-
 function batch_process_items($date,$console, &$context){
+  define('LIMIT', '2');
+  $serviceApi = \Drupal::service('starwars.sources');
+  $apiUrl = $serviceApi->getUrl();
+  if(empty($context['sandbox']['link'])){
+    $context['sandbox']['progress'] = 0;
+    $context['sandbox']['link'] = current($apiUrl);
+    $context['sandbox']['type'] = array_key_first($apiUrl);
+  }
+  $context['finished'] = 0;
+  if(empty($context['sandbox']['data'])){
+    $result = $serviceApi->getApiByUrl($context['sandbox']['link']);
+    $context['sandbox']['data'] = $result;
+  }else{
+    $result = $context['sandbox']['data'];
+  }
+  $type = $context['sandbox']['type'];
+  $counter = 0;
+  $countLimit = 0;
+  foreach ($result->results as $item) {
+    if($countLimit<$context['sandbox']['limit']){
+      $countLimit++;
+      continue;
+    }
+    if($counter != LIMIT){
+      $counter++;
+      $edit = strtotime($item->edited);
+      $context['sandbox']['progress']++;
+      if ($edit >= $date) {
+        $item->type = $type;
+        batch_process_item($item);
+      }
+    if(PHP_SAPI === 'cli') {
+
+    }else{
+      $context['message'] = t('Now processing node :progress', [
+        ':progress' => $context['sandbox']['progress'],
+      ]);
+    }
+    }else{
+      break;
+    }
+  }
+  $context['sandbox']['limit'] += $counter;
+  if($context['sandbox']['limit'] == count($result->results)){
+    $context['sandbox']['limit'] = 0;
+    unset($context['sandbox']['data']);
+    if(isset($result->next)){
+      $context['sandbox']['link'] = $result->next;
+    }else{
+      if($serviceApi->nextTypeLink($type)){
+        $data = $serviceApi->nextTypeLink($type);
+        $context['sandbox']['link'] = $data['link'];
+        $context['sandbox']['type'] = $data['type'];
+      }else{
+        $context['finished'] = 1;
+      }
+    }
+  }
+  $context['results']['processed'] = $context['sandbox']['progress'];
+
+}
+/*
+function batch_process_items2($date,$console, &$context){
+  define('LIMIT', '2');
   $context['results']['console'] = $console;
-  $limit = 260;
   $context['finished'] = 0;
   $serviceApi = \Drupal::service('starwars.sources');
   $apiUrl = $serviceApi->getUrl();
   $count = count($apiUrl);
+  $percnet = 1/$count;
   if (empty($context['sandbox']['progress'])) {
     $context['sandbox']['progress'] = 0;
     $context['sandbox']['link'] = current($apiUrl);
@@ -57,6 +120,7 @@ function batch_process_items($date,$console, &$context){
     $context['sandbox']['link'] = $result->next;
   }else{
     $context['sandbox']['type']++;
+    $context['finished'] += $percnet;
     if($context['sandbox']['type'] == $count){
       $context['finished'] = 1;
     }else{
@@ -64,8 +128,12 @@ function batch_process_items($date,$console, &$context){
       $context['sandbox']['link'] = $apiUrl[$typenext];
     }
   }
+  $maxCount = count($result->results);
   foreach ($result->results as $item){
-    if ($counter != $limit) {
+    if($counter < $context['sandbox']['limit']){
+      continue;
+    }
+    if ($counter != LIMIT) {
       $edit = strtotime($item->edited);
       $context['sandbox']['progress']++;
       $counter++;
@@ -74,24 +142,30 @@ function batch_process_items($date,$console, &$context){
         batch_process_item($item);
       }
       if($console){
-
+// drupal is clear
       } else {
         $context['message'] = t('Now processing node :progress', [
           ':progress' => $context['sandbox']['progress'],
         ]);
       }
       $context['results']['processed'] = $context['sandbox']['progress'];
+    }else{
+      $context['sandbox']['limit'] += $counter;
+      break;
     }
   }
+  if($context['sandbox']['limit'] == $maxCount){
+    $context['sandbox']['limit'] = 0;
+  }
 }
-
+*/
 function batch_process_item($item){
   $serviceApi = \Drupal::service('starwars.batch');
   $serviceApi->createNode($item);
 }
 
 function batch_starwars_finished($success, $results, $operations) {
-  if ($results['console']) {
+  if (PHP_SAPI === 'cli') {
    print('Number of nodes affected by batch:' . $results['processed']);
   } else {
     $message = t('Number of nodes affected by batch: @count', [
