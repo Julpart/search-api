@@ -1,0 +1,5 @@
+entity.node.starwars:
+  route_name: entity.node.starwars
+  base_route: entity.node.canonical
+  title: Example tab
+  weight: 2

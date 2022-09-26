@@ -19,4 +19,17 @@ starwars.batchform:
   requirements:
     _access: 'TRUE'
 
+entity.node.starwars:
+  path: '/node/{node}/swapi'
+  defaults:
+    _controller: '\Drupal\starwars\Controller\starwarsTaskController::exampleTabContent'
+  requirements:
+    _custom_access: '\Drupal\starwars\Controller\starwarsTaskController::exampleTabAccess'
+
+starwars.ajaxform:
+  path: '/ajax-form'
+  defaults:
+    _form: '\Drupal\starwars\Form\AjaxForm'
+  requirements:
+    _access: 'TRUE'
 

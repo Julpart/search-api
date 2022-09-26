@@ -8,6 +8,7 @@ use Drupal\user\UserInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 use \Drupal\node\Entity\Node;
+use \Drupal\Core\Cache\CacheableMetadata;
 
 /**
  * @RestResource(
@@ -58,10 +59,11 @@ class StarWarsRest extends ResourceBase
   public function permissions() {
     return [];
   }
-  protected function loadNode($arr){
+  protected function loadNode($arr,$cache){
     $result = [];
     foreach ($arr as $item){
       $node = Node::load(current($item));
+      $cache->addCacheableDependency($node);
       $result[] = [$item, $node->get('title')->getValue()];
     }
     return $result;
@@ -70,6 +72,13 @@ class StarWarsRest extends ResourceBase
   {
     $query = \Drupal::request()->query;
     $response = [];
+
+    $cache = CacheableMetadata::createFromRenderArray([
+      '#cache' => [
+        'max-age' => 900,
+      ],
+    ]);
+
     if ($query->has('id')) {
       $queryNode = $this->entityManager->getStorage('node');
       $swapi_id = $query->get('id');
@@ -84,11 +93,11 @@ class StarWarsRest extends ResourceBase
           'eye_color' => $node->get('field_eye_color')->getValue(),
           'birth_year' => $node->get('field_birth_year')->getValue(),
           'gender' => $node->get('field_gender')->getValue(),
-          'homeworld' => $this->loadNode($node->get('field_homeworld')->getValue()),
-          'films' => $this->loadNode($node->get('field_films')->getValue()),
-          'species' => $this->loadNode($node->get('field_species')->getValue()),
-          'vehicles' => $this->loadNode($node->get('field_vehicles')->getValue()),
-          'starships' => $this->loadNode($node->get('field_starships')->getValue()),
+          'homeworld' => $this->loadNode($node->get('field_homeworld')->getValue(),$cache),
+          'films' => $this->loadNode($node->get('field_films')->getValue(),$cache),
+          'species' => $this->loadNode($node->get('field_species')->getValue(),$cache),
+          'vehicles' => $this->loadNode($node->get('field_vehicles')->getValue(),$cache),
+          'starships' => $this->loadNode($node->get('field_starships')->getValue(),$cache),
           'created' => $node->get('field_created')->getValue(),
           'edited' => $node->get('field_edited')->getValue(),
         ];
@@ -96,7 +105,7 @@ class StarWarsRest extends ResourceBase
       } else {
         $response['node'] = NULL;
         $response['message'] = 'Сharacter with id ' . $query->get('id') . ' is not found';
-        return new ResourceResponse($response);
+        return (new ResourceResponse($response))->addCacheableDependency($cache);
       }
     } else {
       return new ResourceResponse('Required parameter id is not set.', 400);
