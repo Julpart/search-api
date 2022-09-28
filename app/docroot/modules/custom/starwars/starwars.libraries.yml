@@ -1,0 +1,10 @@
+starwars_ajax_command:
+  version: VERSION
+  js:
+    js/starwars_ajax_command.js: {}
+  dependencies:
+    - core/drupal.ajax
+    - core/jquery
+    - core/jquery.once
+    - core/drupal
+    - core/drupal.dialog.ajax

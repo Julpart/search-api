@@ -6,6 +6,7 @@ use Drupal\Core\Queue\QueueInterface;
 /**
 * Implements hook_entity_insert().
 */
+
 function starwars_cron() {
   $result = \Drupal::service('starwars.sources');
   $queue_factory = \Drupal::service('queue');
@@ -34,6 +35,9 @@ function starwars_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_
   }
   if($form_id == "views_exposed_form"){
     $form['actions']['reset']['#access'] = TRUE;
+  }
+  if($form_id == "starwars_ajax") {
+    $form['#attached']['library'][] = 'starwars/starwars_ajax_command';
   }
 }
 function batch_process_items($date,$console, &$context){

@@ -1,6 +1,6 @@
 <?php
 
-function starwars_shema() {
+function starwars_schema() {
 
   $schema['starwars'] = array(
     'description' => 'Ajax form data',
@@ -29,8 +29,8 @@ function starwars_shema() {
         'description' => 'url',
         'type' => 'varchar',
         'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
+        'not null' => FALSE,
+        'default' => NULL,
       ),
     ),
     'primary key' => array('id'),

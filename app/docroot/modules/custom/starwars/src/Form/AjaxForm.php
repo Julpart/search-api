@@ -7,10 +7,12 @@ use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Entity\EntityTypeBundleInfo;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\starwars\Ajax\starwarsAjaxCommand;
 
 class AjaxForm extends FormBase {
 
   public function buildForm(array $form, FormStateInterface $form_state) {
+
     $form['name'] = [
       '#type' => 'textfield',
       '#title' => $this->t('Name'),
@@ -30,10 +32,28 @@ class AjaxForm extends FormBase {
       ],
       '#suffix' => '<div class="email-validation-message"></div>'
     ];
+    $form['radio'] = array(
+      '#type' => 'radios',
+      '#required' => TRUE,
+      '#default_value' => 1,
+      '#title' => $this->t('У вас есть сайт?'),
+      '#options' => array('У меня есть сайт.','У меня нет сайта.'),
+    );
     $form['site'] = [
       '#type' => 'textfield',
       '#title' => $this->t('site'),
-      '#required' => TRUE,
+      '#states' => array(
+        'visible' => array(
+          ':input[name="radio"]' => array(
+            'value' => 0,
+          ),
+        ),
+        'required' => array(
+          ':input[name="radio"]' => array(
+            'value' => 0,
+          ),
+        ),
+      ),
       '#ajax' => [
         'callback' => '::validateSiteAjax',
         'event' => 'change',
@@ -57,7 +77,7 @@ class AjaxForm extends FormBase {
     );
     $form['submit-message'] = [
       '#markup' => "<div class='submit-message'></div>",
-      '#weight' => -100,
+      '#weight' => 100,
     ];
     return $form;
   }
@@ -110,15 +130,17 @@ public function validateForm(array &$form, FormStateInterface $form_state)
   if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     $form_state->setErrorByName('email');
   }
-  if (filter_var($url, FILTER_VALIDATE_URL)) {
-    $url = parse_url($url);
-    $condition1 = preg_match('#[.]ru#',$url['host']);
-    $condition2 = preg_match('#[.]рф#',$url['host']);
-    if (!($condition1 or $condition2)) {
+  if($form['radio']['#value'] == 0) {
+    if (filter_var($url, FILTER_VALIDATE_URL)) {
+      $url = parse_url($url);
+      $condition1 = preg_match('#[.]ru#', $url['host']);
+      $condition2 = preg_match('#[.]рф#', $url['host']);
+      if (!($condition1 or $condition2)) {
+        $form_state->setErrorByName('site');
+      }
+    } else {
       $form_state->setErrorByName('site');
     }
-  } else {
-    $form_state->setErrorByName('site');
   }
 }
 
@@ -129,6 +151,8 @@ public function validateForm(array &$form, FormStateInterface $form_state)
     $url = $form_state->getValue('site');
     if(empty($form_state->getErrors())){
       $response->addCommand(new HtmlCommand('.submit-message', 'Форма отправлена'));
+      $message = 'Спасибо за заполнение!';
+      $response->addCommand(new starwarsAjaxCommand());
     }else{
       $response->addCommand(new HtmlCommand('.submit-message', 'Ошибка валидации'));
     }
@@ -139,13 +163,15 @@ public function validateForm(array &$form, FormStateInterface $form_state)
       $name = $form_state->getValue('name');
       $email = $form_state->getValue('email');
       $url = $form_state->getValue('site');
-      $url = parse_url($url);
-      $result_url =str_replace('www.','',$url['host']);
-      $result_url .= '/';
-      $path =trim($url['path'], "/" );
-      $result_url .= $path;
-
-      $query = \Drupal::database()->insert('starwars.starwars');
+      if($form['radio']['#value'] == 0) {
+        $url = parse_url($url);
+        $result_url = str_replace('www.', '', $url['host']);
+        $result_url .= '/';
+        $path = trim($url['path'], "/");
+        $result_url .= $path;
+      }
+try{
+      $query = \Drupal::database()->insert('starwars');
       $query->fields(array(
         'name',
         'email',
@@ -154,9 +180,13 @@ public function validateForm(array &$form, FormStateInterface $form_state)
       $query->values(array(
         $name,
         $email,
-        $url,
+        $result_url,
       ));
       $query->execute();
+    }
+    catch (Exception $e){
+      \Drupal::logger('starwars')->error($e->getMessage());
+}
     }
 
   }
