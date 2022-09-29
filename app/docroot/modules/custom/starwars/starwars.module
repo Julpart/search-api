@@ -2,10 +2,21 @@
 use Drupal\Core\Entity\EntityInterface;
 use Drupal\Core\Queue\QueueFactory;
 use Drupal\Core\Queue\QueueInterface;
+use Drupal\Core\Access\AccessResult;
+use Drupal\Core\Session\AccountInterface;
+use Drupal\node\NodeInterface;
+use Drupal\Core\Node;
 
 /**
 * Implements hook_entity_insert().
 */
+function starwars_theme($existing, $type, $theme, $path){
+  return [
+    'starwars_template' => [
+      'variables' => ['message' => NULL],
+    ],
+  ];
+}
 
 function starwars_cron() {
   $result = \Drupal::service('starwars.sources');
@@ -179,3 +190,71 @@ function batch_starwars_finished($success, $results, $operations) {
       ->addStatus($message);
   }
 }
+
+function starwars_node_access(NodeInterface $node, $op, AccountInterface $account) {
+  $type = $node->bundle();
+if($type === 'people') {
+  $roles = $account->getRoles();
+  switch ($op) {
+    case 'create':
+      $access = AccessResult::allowedIfHasPermission($account, 'create ' . $type . ' content');
+      break;
+    case 'update':
+      $access = AccessResult::allowedIfHasPermission($account, 'update any ' . $type . ' content');
+      if(array_search('editor',$roles)) {
+        $editors = $node->get('field_editor')->getValue();
+        $access = AccessResult::forbidden();
+        if (!empty($editors)) {
+          foreach ($editors as $item) {
+            if (array_search($account->id(), $item)) {
+              $access = AccessResult::allowed();
+              break;
+            }
+          }
+        }
+      }
+      break;
+
+    case 'delete':
+      $access = AccessResult::allowedIfHasPermission($account, 'delete any ' . $type . ' content');
+      if (!$access->isAllowed() && $account->hasPermission('delete own ' . $type . ' content')) {
+        $access = $access->orIf(AccessResult::allowedIf($account->id() == $node->getOwnerId()))->cachePerUser()->addCacheableDependency($node);
+      }
+      break;
+
+    default:
+      $access = AccessResult::neutral();
+  }
+
+  return $access;
+}
+}
+
+function starwars_entity_field_access($operation, \Drupal\Core\Field\FieldDefinitionInterface $field_definition, \Drupal\Core\Session\AccountInterface $account, \Drupal\Core\Field\FieldItemListInterface $items = NULL) {
+
+  $fields_names = array(
+    'field_editor'
+  );
+
+  if (in_array($field_definition->getName(), $fields_names)) {
+    $account = \Drupal::currentUser();
+    if (in_array('editor', $account->getRoles())) {
+      return AccessResult::forbidden();
+    }
+  }
+
+  return AccessResult::neutral();
+}
+function starwars_node_insert($node)
+{
+  if ($node->bundle() === 'people') {
+  $user = \Drupal::currentUser();
+  $roles = $user->getRoles();
+  if (in_array('editor', $roles)) {
+    $node->set('field_editor', $user->id());
+    $node->save();
+  }
+}
+}
+
+

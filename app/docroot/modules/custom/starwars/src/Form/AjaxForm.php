@@ -3,6 +3,7 @@ namespace Drupal\starwars\Form;
 use Drupal\Core\Ajax\AjaxResponse;
 use Drupal\Core\Ajax\CssCommand;
 use Drupal\Core\Ajax\HtmlCommand;
+use Drupal\Core\Ajax\OpenModalDialogCommand;
 use Drupal\Core\Datetime\DrupalDateTime;
 use Drupal\Core\Entity\EntityTypeBundleInfo;
 use Drupal\Core\Form\FormBase;
@@ -146,13 +147,37 @@ public function validateForm(array &$form, FormStateInterface $form_state)
 
   public function ajaxSubmitCallback(array &$form, FormStateInterface $form_state)
   {
+    $config_pages = \Drupal::service('config_pages.loader');
+    $field_title = $config_pages->getValue('starwars_modal_windows', 'field_title');
+    $title = current($field_title)['value'];
+    $user = \Drupal::currentUser();
+    $user_data = \Drupal\user\Entity\User::load($user->id());
+    if ($user->isAuthenticated()) {
+      $field_message = $config_pages->getValue('starwars_modal_windows', 'field_form_message');
+      $message = current($field_message)['value'];
+      if (isset($user_data->field_name->value)) {
+        $message = str_replace('@name', $user_data->field_name->value, $message);
+      } else {
+        $message = str_replace('@name', '', $message);
+      }
+      if (isset($user_data->field_surname->value)) {
+        $message = str_replace('@surname', $user_data->field_surname->value, $message);
+      } else {
+        $message = str_replace('@surname', '', $message);
+      }
+    } else {
+      $field_message = $config_pages->getValue('starwars_modal_windows', 'field_message_anon');
+      $message = current($field_message)['value'];
+    }
+    $content['#attached']['library'][] = 'core/drupal.dialog.ajax';
+    $content['#theme'] = 'starwars_template';
+    $content['#message'] = $message;
     $response = new AjaxResponse();
     $email = $form_state->getValue('email');
     $url = $form_state->getValue('site');
     if(empty($form_state->getErrors())){
       $response->addCommand(new HtmlCommand('.submit-message', 'Форма отправлена'));
-      $message = 'Спасибо за заполнение!';
-      $response->addCommand(new starwarsAjaxCommand());
+      $response->addCommand(new OpenModalDialogCommand($title, $content, ['width' => '200', 'height' => '200']));
     }else{
       $response->addCommand(new HtmlCommand('.submit-message', 'Ошибка валидации'));
     }

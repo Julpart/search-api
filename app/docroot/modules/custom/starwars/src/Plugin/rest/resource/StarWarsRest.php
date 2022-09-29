@@ -72,13 +72,15 @@ class StarWarsRest extends ResourceBase
   {
     $query = \Drupal::request()->query;
     $response = [];
-
+/*
     $cache = CacheableMetadata::createFromRenderArray([
       '#cache' => [
         'max-age' => 900,
       ],
     ]);
-
+*/
+    $cache = new CacheableMetadata();
+    $cache->setCacheMaxAge(900);
     if ($query->has('id')) {
       $queryNode = $this->entityManager->getStorage('node');
       $swapi_id = $query->get('id');
@@ -101,12 +103,11 @@ class StarWarsRest extends ResourceBase
           'created' => $node->get('field_created')->getValue(),
           'edited' => $node->get('field_edited')->getValue(),
         ];
-        return new ResourceResponse($response);
       } else {
         $response['node'] = NULL;
         $response['message'] = 'Сharacter with id ' . $query->get('id') . ' is not found';
-        return (new ResourceResponse($response))->addCacheableDependency($cache);
       }
+      return (new ResourceResponse($response))->addCacheableDependency($cache);
     } else {
       return new ResourceResponse('Required parameter id is not set.', 400);
     }

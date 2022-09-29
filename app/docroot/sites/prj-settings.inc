@@ -123,8 +123,8 @@ switch ($current_env) {
     $settings['trusted_host_patterns'] = [];
 
     // Disable caching during development.
-    $settings['cache']['bins']['render'] = 'cache.backend.null';
-    $settings['cache']['bins']['dynamic_page_cache'] = 'cache.backend.null';
-    $settings['cache']['bins']['page'] = 'cache.backend.null';
+  //  $settings['cache']['bins']['render'] = 'cache.backend.null';
+   // $settings['cache']['bins']['dynamic_page_cache'] = 'cache.backend.null';
+   // $settings['cache']['bins']['page'] = 'cache.backend.null';
     break;
 }

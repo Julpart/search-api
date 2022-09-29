@@ -8,3 +8,4 @@ starwars_ajax_command:
     - core/jquery.once
     - core/drupal
     - core/drupal.dialog.ajax
+    - jquery_ui_tabs/tabs
