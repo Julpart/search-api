@@ -1,0 +1,5 @@
+name: Starwars theme
+type: theme
+description: 'A cuddly theme that offers extra fluffiness.'
+core_version_requirement: ^9
+base theme: bartik

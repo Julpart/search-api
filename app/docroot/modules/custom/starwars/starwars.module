@@ -15,7 +15,18 @@ function starwars_theme($existing, $type, $theme, $path){
     'starwars_template' => [
       'variables' => ['message' => NULL],
     ],
+    'starwars_tab_template' => [
+      'variables' => [],
+    ]
   ];
+}
+
+
+function starwars_preprocess_node__people__full(&$variables)
+{
+  $get = \Drupal::request()->query->get('tab');
+  $variables['test'] = $get;
+  $variables['#cache']['contexts'][] = 'url.query_args';
 }
 
 function starwars_cron() {
@@ -113,67 +124,7 @@ function batch_process_items($date,$console, &$context){
   $context['results']['processed'] = $context['sandbox']['progress'];
 
 }
-/*
-function batch_process_items2($date,$console, &$context){
-  define('LIMIT', '2');
-  $context['results']['console'] = $console;
-  $context['finished'] = 0;
-  $serviceApi = \Drupal::service('starwars.sources');
-  $apiUrl = $serviceApi->getUrl();
-  $count = count($apiUrl);
-  $percnet = 1/$count;
-  if (empty($context['sandbox']['progress'])) {
-    $context['sandbox']['progress'] = 0;
-    $context['sandbox']['link'] = current($apiUrl);
-    $context['sandbox']['type'] = 0;
-  }
-  $counter = 0;
-  $result = $serviceApi->getApiByUrl($context['sandbox']['link']);
-  $keys = array_keys($apiUrl);
-  $type = $keys[$context['sandbox']['type']];
-  if(isset($result->next)){
-    $context['sandbox']['link'] = $result->next;
-  }else{
-    $context['sandbox']['type']++;
-    $context['finished'] += $percnet;
-    if($context['sandbox']['type'] == $count){
-      $context['finished'] = 1;
-    }else{
-      $typenext = $keys[$context['sandbox']['type']];
-      $context['sandbox']['link'] = $apiUrl[$typenext];
-    }
-  }
-  $maxCount = count($result->results);
-  foreach ($result->results as $item){
-    if($counter < $context['sandbox']['limit']){
-      continue;
-    }
-    if ($counter != LIMIT) {
-      $edit = strtotime($item->edited);
-      $context['sandbox']['progress']++;
-      $counter++;
-      if ($edit >= $date) {
-        $item->type = $type;
-        batch_process_item($item);
-      }
-      if($console){
-// drupal is clear
-      } else {
-        $context['message'] = t('Now processing node :progress', [
-          ':progress' => $context['sandbox']['progress'],
-        ]);
-      }
-      $context['results']['processed'] = $context['sandbox']['progress'];
-    }else{
-      $context['sandbox']['limit'] += $counter;
-      break;
-    }
-  }
-  if($context['sandbox']['limit'] == $maxCount){
-    $context['sandbox']['limit'] = 0;
-  }
-}
-*/
+
 function batch_process_item($item){
   $serviceApi = \Drupal::service('starwars.batch');
   $serviceApi->createNode($item);

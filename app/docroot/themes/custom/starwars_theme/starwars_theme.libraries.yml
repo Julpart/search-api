@@ -1,0 +1,10 @@
+my-library:
+  version: 1.x
+  js:
+    js/my-library.js: { }
+  dependencies:
+    - core/jquery
+    - core/jquery.once
+    - core/drupal
+    - jquery_ui_tabs/tabs
+    - core/once
